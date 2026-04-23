@@ -1,0 +1,40 @@
+/* Importar Fuente Poppins */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+:root {
+    --naranja-principal: #E8640A;
+    --fondo-gris: #F5F5F5;
+    --blanco: #FFFFFF;
+    --texto-principal: #1C1C1E;
+    --texto-secundario: #6C6C70;
+    --shadow: 0 2px 8px rgba(0,0,0,0.10);
+    --border-radius: 12px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--fondo-gris);
+    color: var(--texto-principal);
+}
+
+/* Estilos básicos para botones */
+.btn-naranja {
+    background-color: var(--naranja-principal);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-naranja:hover {
+    background-color: #cf5608;
+}

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Pedidos - MenuOrder</title>
+    <link rel="stylesheet" href="css/estilos.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .main-container { display: flex; height: 100vh; }
+        .sidebar { width: 250px; background: white; border-right: 1px solid #ddd; padding: 20px; }
+        .sidebar-item { display: flex; align-items: center; padding: 12px; cursor: pointer; border-radius: 8px; margin-bottom: 5px; color: var(--texto-secundario); text-decoration: none; }
+        .sidebar-item.active { background: #fff1e6; color: var(--naranja-principal); }
+        .sidebar-item i { margin-right: 10px; }
+
+        .content { flex: 1; display: flex; flex-direction: column; background: var(--fondo-gris); overflow-y: auto; }
+        .navbar { height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: var(--shadow); }
+        
+        .header-section { padding: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .filters { background: white; margin: 0 30px 20px 30px; padding: 20px; border-radius: 12px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 15px; }
+        .filters input { padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins'; }
+
+        .history-table { background: white; margin: 0 30px; border-radius: 12px; box-shadow: var(--shadow); padding: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { padding: 15px; border-bottom: 2px solid #eee; text-align: left; color: var(--texto-secundario); }
+        td { padding: 15px; border-bottom: 1px solid #eee; }
+        
+        .status-badge { background: #E8F5E9; color: #2E7D32; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .no-data { text-align: center; padding: 40px; color: var(--texto-secundario); }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <div class="sidebar">
+        <h2 style="color: var(--naranja-principal); margin-bottom: 30px;">MenuOrder</h2>
+        <a href="dashboard.html" class="sidebar-item"><i class="material-icons">dashboard</i> Dashboard</a>
+        <a href="menu.html" class="sidebar-item"><i class="material-icons">restaurant_menu</i> Gestión Menú</a>
+        <a href="historial.html" class="sidebar-item active"><i class="material-icons">history</i> Historial</a>
+    </div>
+
+    <div class="content">
+        <div class="navbar">
+            <span style="font-weight: 600;">Historial de Ventas</span>
+            <button onclick="cerrarSesion()" style="background:none; border:none; cursor:pointer;"><i class="material-icons">logout</i></button>
+        </div>
+
+        <div class="header-section">
+            <h1>Pedidos Completados</h1>
+        </div>
+
+        <div class="filters">
+            <label>Filtrar por fecha:</label>
+            <input type="date" id="fechaFiltro" onchange="filtrarHistorial()">
+        </div>
+
+        <div class="history-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Cliente</th>
+                        <th>Mesa</th>
+                        <th>Total</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-historial">
+                    </tbody>
+            </table>
+            <div id="mensaje-vacio" class="no-data" style="display: none;">
+                No hay pedidos completados para esta fecha.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    if(localStorage.getItem('autenticado') !== 'true') window.location.href = 'index.html';
+
+    // Datos de prueba (Solo los que tienen estado 'Listo')
+    const historialPedidos = [
+        { codigo: "MO-1039", cliente: "Ana Torres", mesa: "Mesa 2", total: 35.50, estado: "Listo", fecha: "2026-04-23" },
+        { codigo: "MO-1040", cliente: "Roberto Ruiz", mesa: "Mesa 5", total: 82.00, estado: "Listo", fecha: "2026-04-23" },
+        { codigo: "MO-1041", cliente: "Lucía Méndez", mesa: "Mesa 8", total: 12.00, estado: "Listo", fecha: "2026-04-22" }
+    ];
+
+    // Poner fecha de hoy por defecto en el input
+    document.getElementById('fechaFiltro').valueAsDate = new Date();
+
+    function filtrarHistorial() {
+        const fechaSeleccionada = document.getElementById('fechaFiltro').value;
+        const tbody = document.getElementById('tabla-historial');
+        const mensajeVacio = document.getElementById('mensaje-vacio');
+        
+        tbody.innerHTML = '';
+        
+        const pedidosFiltrados = historialPedidos.filter(p => p.fecha === fechaSeleccionada);
+
+        if (pedidosFiltrados.length === 0) {
+            mensajeVacio.style.display = 'block';
+        } else {
+            mensajeVacio.style.display = 'none';
+            pedidosFiltrados.forEach(p => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${p.codigo}</strong></td>
+                        <td>${p.cliente}</td>
+                        <td>${p.mesa}</td>
+                        <td>S/ ${p.total.toFixed(2)}</td>
+                        <td><span class="status-badge">Entregado</span></td>
+                    </tr>
+                `;
+            });
+        }
+    }
+
+    function cerrarSesion() {
+        localStorage.removeItem('autenticado');
+        window.location.href = 'index.html';
+    }
+
+    // Cargar historial inicial
+    filtrarHistorial();
+</script>
+</body>
+</html>

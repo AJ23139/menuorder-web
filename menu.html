@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión del Menú - MenuOrder</title>
+    <link rel="stylesheet" href="css/estilos.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .main-container { display: flex; height: 100vh; }
+        .sidebar { width: 250px; background: white; border-right: 1px solid #ddd; padding: 20px; }
+        .sidebar-item { display: flex; align-items: center; padding: 12px; cursor: pointer; border-radius: 8px; margin-bottom: 5px; color: var(--texto-secundario); text-decoration: none; }
+        .sidebar-item.active { background: #fff1e6; color: var(--naranja-principal); }
+        .sidebar-item i { margin-right: 10px; }
+
+        .content { flex: 1; display: flex; flex-direction: column; background: var(--fondo-gris); overflow-y: auto; }
+        .navbar { height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: var(--shadow); }
+        
+        .header-section { padding: 30px; display: flex; justify-content: space-between; align-items: center; }
+        .table-container { background: white; margin: 0 30px; border-radius: 12px; box-shadow: var(--shadow); padding: 20px; }
+        
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 15px; border-bottom: 2px solid #eee; color: var(--texto-secundario); }
+        td { padding: 15px; border-bottom: 1px solid #eee; }
+
+        .btn-action { border: none; background: none; cursor: pointer; margin-right: 10px; }
+        .btn-edit { color: #1565C0; }
+        .btn-delete { color: #d32f2f; }
+
+        /* Modal Styles */
+        .modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 10% auto; padding: 30px; width: 400px; border-radius: 12px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <div class="sidebar">
+        <h2 style="color: var(--naranja-principal); margin-bottom: 30px;">MenuOrder</h2>
+        <a href="dashboard.html" class="sidebar-item"><i class="material-icons">dashboard</i> Dashboard</a>
+        <a href="menu.html" class="sidebar-item active"><i class="material-icons">restaurant_menu</i> Gestión Menú</a>
+        <a href="historial.html" class="sidebar-item"><i class="material-icons">history</i> Historial</a>
+    </div>
+
+    <div class="content">
+        <div class="navbar">
+            <span style="font-weight: 600;">Administración del Menú</span>
+            <button onclick="cerrarSesion()" style="background:none; border:none; cursor:pointer;"><i class="material-icons">logout</i></button>
+        </div>
+
+        <div class="header-section">
+            <h1>Platos del Menú</h1>
+            <button class="btn-naranja" onclick="abrirModal()">+ Agregar plato</button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Categoría</th>
+                        <th>Precio</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-platos">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="modalPlato" class="modal">
+    <div class="modal-content">
+        <h2 id="modalTitulo">Agregar Nuevo Plato</h2>
+        <form id="formPlato">
+            <input type="hidden" id="platoId">
+            <div class="form-group">
+                <label>Nombre del Plato</label>
+                <input type="text" id="nombrePlato" required>
+            </div>
+            <div class="form-group">
+                <label>Categoría</label>
+                <select id="categoriaPlato">
+                    <option value="Entradas">Entradas</option>
+                    <option value="Fondos">Fondos</option>
+                    <option value="Bebidas">Bebidas</option>
+                    <option value="Postres">Postres</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Precio (S/)</label>
+                <input type="number" id="precioPlato" step="0.10" required>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn-naranja" style="background:#6c757d; flex:1" onclick="cerrarModal()">Cancelar</button>
+                <button type="submit" class="btn-naranja" style="flex:1">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    if(localStorage.getItem('autenticado') !== 'true') window.location.href = 'index.html';
+
+    // Datos iniciales de la guía [cite: 188-199]
+    let platos = [
+        { id: 1, nombre: "Ceviche clásico", categoria: "Entradas", precio: 28.00 },
+        { id: 2, nombre: "Tequeños de queso", categoria: "Entradas", precio: 18.00 },
+        { id: 3, nombre: "Causa rellena", categoria: "Entradas", precio: 22.00 },
+        { id: 4, nombre: "Lomo saltado", categoria: "Fondos", precio: 38.00 },
+        { id: 7, nombre: "Chicha morada", categoria: "Bebidas", precio: 8.00 },
+        { id: 9, nombre: "Arroz con leche", categoria: "Postres", precio: 12.00 }
+    ];
+
+    function renderizarTabla() {
+        const tbody = document.getElementById('tabla-platos');
+        tbody.innerHTML = '';
+        platos.forEach(p => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${p.nombre}</td>
+                    <td>${p.categoria}</td>
+                    <td>S/ ${p.precio.toFixed(2)}</td>
+                    <td>
+                        <button class="btn-action btn-edit" onclick="editarPlato(${p.id})"><i class="material-icons">edit</i></button>
+                        <button class="btn-action btn-delete" onclick="eliminarPlato(${p.id})"><i class="material-icons">delete</i></button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    function eliminarPlato(id) {
+        if(confirm('¿Estás seguro de que deseas eliminar este plato?')) { [cite, 306]
+            platos = platos.filter(p => p.id !== id);
+            renderizarTabla();
+        }
+    }
+
+    function abrirModal() {
+        document.getElementById('modalTitulo').innerText = "Agregar Nuevo Plato";
+        document.getElementById('formPlato').reset();
+        document.getElementById('platoId').value = "";
+        document.getElementById('modalPlato').style.display = 'block';
+    }
+
+    function editarPlato(id) {
+        const p = platos.find(item => item.id === id);
+        document.getElementById('modalTitulo').innerText = "Editar Plato";
+        document.getElementById('platoId').value = p.id;
+        document.getElementById('nombrePlato').value = p.nombre;
+        document.getElementById('categoriaPlato').value = p.categoria;
+        document.getElementById('precioPlato').value = p.precio;
+        document.getElementById('modalPlato').style.display = 'block';
+    }
+
+    function cerrarModal() {
+        document.getElementById('modalPlato').style.display = 'none';
+    }
+
+    document.getElementById('formPlato').onsubmit = (e) => {
+        e.preventDefault();
+        const id = document.getElementById('platoId').value;
+        const nombre = document.getElementById('nombrePlato').value;
+        const categoria = document.getElementById('categoriaPlato').value;
+        const precio = parseFloat(document.getElementById('precioPlato').value);
+
+        if(id) {
+            // Editar existente
+            const index = platos.findIndex(p => p.id == id);
+            platos[index] = { id: parseInt(id), nombre, categoria, precio };
+        } else {
+            // Agregar nuevo
+            platos.push({ id: Date.now(), nombre, categoria, precio });
+        }
+        
+        cerrarModal();
+        renderizarTabla();
+    };
+
+    function cerrarSesion() {
+        localStorage.removeItem('autenticado');
+        window.location.href = 'index.html';
+    }
+
+    renderizarTabla();
+</script>
+</body>
+</html>

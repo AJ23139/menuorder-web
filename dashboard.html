@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MenuOrder</title>
+    <link rel="stylesheet" href="css/estilos.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* Layout Principal */
+        .main-container { display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Menú Lateral */
+        .sidebar { width: 250px; background: white; border-right: 1px solid #ddd; padding: 20px; }
+        .sidebar-item { display: flex; align-items: center; padding: 12px; cursor: pointer; border-radius: 8px; margin-bottom: 5px; color: var(--texto-secundario); text-decoration: none; }
+        .sidebar-item.active { background: #fff1e6; color: var(--naranja-principal); }
+        .sidebar-item i { margin-right: 10px; }
+
+        /* Contenido */
+        .content { flex: 1; display: flex; flex-direction: column; background: var(--fondo-gris); }
+        .navbar { height: 60px; background: white; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-shadow: var(--shadow); }
+        
+        .kanban-board { display: flex; gap: 20px; padding: 20px; flex: 1; overflow-x: auto; }
+        .column { flex: 1; min-width: 300px; border-radius: 12px; display: flex; flex-direction: column; }
+        .column-header { padding: 15px; font-weight: 700; display: flex; justify-content: space-between; }
+        
+        /* Colores de Columnas según Guía */
+        .col-pendiente { background: #FFF8E1; color: #F57F17; }
+        .col-preparacion { background: #E3F2FD; color: #1565C0; }
+        .col-listo { background: #E8F5E9; color: #2E7D32; }
+
+        /* Tarjetas de Pedido */
+        .pedido-card { background: white; margin: 10px; padding: 15px; border-radius: 12px; box-shadow: var(--shadow); border-left: 5px solid; }
+        .pedido-card h3 { font-size: 18px; margin-bottom: 5px; }
+        .platos-lista { font-size: 13px; color: var(--texto-secundario); margin: 10px 0; list-style: none; }
+        .total-container { text-align: right; font-weight: 700; color: var(--texto-principal); }
+        
+        .btn-status { width: 100%; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: 600; margin-top: 10px; color: white; }
+        .btn-azul { background: #1565C0; }
+        .btn-verde { background: #2E7D32; }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <div class="sidebar">
+        <h2 style="color: var(--naranja-principal); margin-bottom: 30px;">MenuOrder</h2>
+        <a href="dashboard.html" class="sidebar-item active"><i class="material-icons">dashboard</i> Dashboard</a>
+        <a href="menu.html" class="sidebar-item"><i class="material-icons">restaurant_menu</i> Gestión Menú</a>
+        <a href="historial.html" class="sidebar-item"><i class="material-icons">history</i> Historial</a>
+    </div>
+
+    <div class="content">
+        <div class="navbar">
+            <span style="font-weight: 600;">Panel del Restaurante</span>
+            <button onclick="cerrarSesion()" style="background:none; border:none; cursor:pointer;"><i class="material-icons">logout</i></button>
+        </div>
+
+        <div class="kanban-board" id="kanbanBoard">
+            <div class="column col-pendiente">
+                <div class="column-header">Pendiente <span id="count-pendiente">0</span></div>
+                <div id="lista-pendiente"></div>
+            </div>
+            <div class="column col-preparacion">
+                <div class="column-header">En preparación <span id="count-preparacion">0</span></div>
+                <div id="lista-preparacion"></div>
+            </div>
+            <div class="column col-listo">
+                <div class="column-header">Listo <span id="count-listo">0</span></div>
+                <div id="lista-listo"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Verificar sesión
+    if(localStorage.getItem('autenticado') !== 'true') window.location.href = 'index.html';
+
+    // Datos de prueba [cite: 131, 174]
+    let pedidos = [
+        { id: 1, codigoPedido: "MO-1042", mesa: "Mesa 3", nombreCliente: "Juan Pérez", total: 46.00, estado: "Pendiente", hora: "12:35", platos: [{ nombre: "Ceviche clásico", precio: 28 }, { nombre: "Chicha morada", precio: 8 }, { nombre: "Arroz con leche", precio: 10 }] },
+        { id: 2, codigoPedido: "MO-1043", mesa: "Mesa 7", nombreCliente: "María García", total: 62.00, estado: "En preparación", hora: "12:41", platos: [{ nombre: "Lomo saltado", precio: 38 }, { nombre: "Agua mineral", precio: 6 }, { nombre: "Mazamorra morada", precio: 10 }, { nombre: "Tequeños de queso", precio: 18 }] },
+        { id: 3, codigoPedido: "MO-1044", mesa: "Mesa 1", nombreCliente: "Carlos López", total: 32.00, estado: "Listo", hora: "12:20", platos: [{ nombre: "Ají de gallina", precio: 28 }, { nombre: "Agua mineral", precio: 6 }] }
+    ];
+
+    function renderizarPedidos() {
+        // Limpiar listas
+        document.getElementById('lista-pendiente').innerHTML = '';
+        document.getElementById('lista-preparacion').innerHTML = '';
+        document.getElementById('lista-listo').innerHTML = '';
+
+        let counts = { Pendiente: 0, "En preparación": 0, Listo: 0 };
+
+        pedidos.forEach(p => {
+            counts[p.estado]++;
+            const card = document.createElement('div');
+            card.className = 'pedido-card';
+            card.style.borderColor = p.estado === 'Pendiente' ? '#F57F17' : (p.estado === 'En preparación' ? '#1565C0' : '#2E7D32');
+            
+            let botonHtml = '';
+            if(p.estado === 'Pendiente') botonHtml = `<button class="btn-status btn-azul" onclick="cambiarEstado(${p.id}, 'En preparación')">Iniciar preparación</button>`;
+            else if(p.estado === 'En preparación') botonHtml = `<button class="btn-status btn-verde" onclick="cambiarEstado(${p.id}, 'Listo')">Marcar como listo</button>`;
+
+            card.innerHTML = `
+                <h3>${p.codigoPedido}</h3>
+                <p><strong>${p.mesa}</strong> - ${p.nombreCliente}</p>
+                <ul class="platos-lista">${p.platos.map(pl => `<li>• ${pl.nombre}</li>`).join('')}</ul>
+                <div class="total-container">S/ ${p.total.toFixed(2)}</div>
+                <small>${p.hora}</small>
+                ${botonHtml}
+            `;
+
+            if(p.estado === 'Pendiente') document.getElementById('lista-pendiente').appendChild(card);
+            else if(p.estado === 'En preparación') document.getElementById('lista-preparacion').appendChild(card);
+            else if(p.estado === 'Listo') document.getElementById('lista-listo').appendChild(card);
+        });
+
+        document.getElementById('count-pendiente').innerText = counts.Pendiente;
+        document.getElementById('count-preparacion').innerText = counts["En preparación"];
+        document.getElementById('count-listo').innerText = counts.Listo;
+    }
+
+    function cambiarEstado(id, nuevoEstado) {
+        const pedido = pedidos.find(p => p.id === id);
+        if(pedido) {
+            pedido.estado = nuevoEstado;
+            renderizarPedidos();
+        }
+    }
+
+    function cerrarSesion() {
+        localStorage.removeItem('autenticado');
+        window.location.href = 'index.html';
+    }
+
+    renderizarPedidos();
+</script>
+</body>
+</html>

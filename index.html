@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MenuOrder</title>
+    <link rel="stylesheet" href="css/estilos.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        .login-container {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .login-card {
+            background: var(--blanco);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .logo {
+            color: var(--naranja-principal);
+            font-weight: 700;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            color: var(--texto-secundario);
+            margin-bottom: 30px;
+        }
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
+        #mensaje-error {
+            color: #d32f2f;
+            font-size: 14px;
+            margin-bottom: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <div class="login-card">
+        <h1 class="logo">MenuOrder</h1>
+        <p class="subtitle">Panel de Administración</p>
+        
+        <div id="mensaje-error">Usuario o contraseña incorrectos</div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Correo electrónico</label>
+                <input type="email" id="email" placeholder="admin@menuorder.com" required>
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-naranja" style="width: 100%;">Ingresar</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Credenciales según la guía 
+    const CREDENCIALES = {
+        email: "admin@menuorder.com",
+        pass: "admin123"
+    };
+
+    // Si ya hay sesión, redirigir [cite: 271]
+    if(localStorage.getItem('autenticado') === 'true') {
+        window.location.href = 'dashboard.html';
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('password').value;
+        const errorMsg = document.getElementById('mensaje-error');
+
+        if(email === CREDENCIALES.email && pass === CREDENCIALES.pass) {
+            localStorage.setItem('autenticado', 'true'); // [cite: 104]
+            window.location.href = 'dashboard.html'; // [cite: 105]
+        } else {
+            errorMsg.style.display = 'block'; // [cite: 97]
+        }
+    });
+</script>
+</body>
+</html>
